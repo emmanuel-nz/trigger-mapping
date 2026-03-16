@@ -6,6 +6,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Talleu\TriggerMapping\Tests\Application\Entity\MissingInDbEntity;
 use Talleu\TriggerMapping\Tests\Application\Entity\MysqlCorrectlyMappedEntity;
+use Talleu\TriggerMapping\Tests\Application\Entity\MysqlQuotedTableCorrectlyMappedEntity;
 use Talleu\TriggerMapping\Tests\Application\Entity\NoTriggerEntity;
 use Talleu\TriggerMapping\Tests\Application\Entity\TriggerBadParamsEntity;
 use Talleu\TriggerMapping\Tests\Functional\AbstractTriggerValidateSchemaTestCase;
@@ -38,6 +39,23 @@ final class TriggerSchemaValidateTest extends AbstractTriggerValidateSchemaTestC
         $command = $this->application->find('triggers:schema:validate');
         $commandTester = new CommandTester($command);
         $commandTester->execute(['--entity' => MysqlCorrectlyMappedEntity::class]);
+        $commandTester->assertCommandIsSuccessful();
+        $this->assertStringContainsString('The database triggers are in sync with the mapping.', $commandTester->getDisplay());
+    }
+
+    public function testQuotedTableCorrectlyMappedEntity(): void
+    {
+        $sql = $this->getCreateTriggerSql(
+            'quoted_table_correctly_mapped_trigger',
+            'mysql_quoted_table_correctly_mapped_entity',
+            'BEFORE',
+            'UPDATE',
+        );
+        $this->executeSql($sql);
+
+        $command = $this->application->find('triggers:schema:validate');
+        $commandTester = new CommandTester($command);
+        $commandTester->execute(['--entity' => MysqlQuotedTableCorrectlyMappedEntity::class]);
         $commandTester->assertCommandIsSuccessful();
         $this->assertStringContainsString('The database triggers are in sync with the mapping.', $commandTester->getDisplay());
     }

@@ -14,13 +14,21 @@ final class EntityFinder
     ) {
     }
 
+    private function unquote(string $value): string
+    {
+        // " : PostgreSQL, Oracle, SQLite, MySQL if the ANSI_QUOTES SQL mode is enabled, SQL Server if SET QUOTED_IDENTIFIER is ON
+        // ` : MySQL, SQLite
+        // [] : SQL Server, SQLite
+        return trim($value, '"`[]');
+    }
+
     public function findEntityFqcnForTable(string $tableName): ?string
     {
         $allMetadata = $this->entityManager->getMetadataFactory()->getAllMetadata();
 
         /** @var ClassMetadata<object> $metadata */
         foreach ($allMetadata as $metadata) {
-            if ($metadata->getTableName() === $tableName) {
+            if ($this->unquote($metadata->getTableName()) === $tableName) {
                 return $metadata->getName();
             }
         }
@@ -35,7 +43,7 @@ final class EntityFinder
         /** @var ClassMetadata<object> $metadata */
         foreach ($allMetadata as $metadata) {
             foreach ($metadata->getAssociationMappings() as $assoc) {
-                if (isset($assoc['joinTable']['name']) && $assoc['joinTable']['name'] === $tableName) {
+                if (isset($assoc['joinTable']['name']) && $this->unquote($assoc['joinTable']['name']) === $tableName) {
                     return $metadata->getName();
                 }
             }
